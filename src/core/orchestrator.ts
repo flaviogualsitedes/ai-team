@@ -59,6 +59,7 @@ export class Orchestrator {
     const resolver = new TruthResolver();
     let lastOutput = 'Nenhum passo anterior.';
     let totalTokens = 0;
+    let totalCostUsd = 0;
     const startTime = Date.now();
 
     try {
@@ -93,33 +94,35 @@ export class Orchestrator {
         
         const duration = (Date.now() - stepStartTime) / 1000;
         const tokens = usage.totalTokens;
+        const stepCost = (tokens / 1000) * (modelConfig?.costPer1kTokens || 0);
+
+        // Salvar Passo
+        this.db.prepare(`
+          INSERT INTO execution_steps (id, execution_id, agent_id, step_number, output_full, status, tokens_used, cost_usd, model_id, duration_ms)
+          VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?)
+        `).run(nanoid(), executionId, agent.id, agent.position, text, tokens, stepCost, actualModelId, duration * 1000);
+
+        lastOutput = text;
         totalTokens += tokens;
+        totalCostUsd += stepCost;
 
         if (options.onStepComplete) {
           options.onStepComplete({ duration, tokens });
         }
-
-        // Salvar Passo
-        this.db.prepare(`
-          INSERT INTO execution_steps (id, execution_id, agent_id, step_number, output_full, status, tokens_used, duration_ms)
-          VALUES (?, ?, ?, ?, ?, 'completed', ?, ?)
-        `).run(nanoid(), executionId, agent.id, agent.position, text, tokens, duration * 1000);
-
-        lastOutput = text;
       }
 
       // Finalizar Execução
       const totalDuration = Date.now() - startTime;
       this.db.prepare(`
         UPDATE executions 
-        SET status = 'completed', total_tokens = ?, duration_ms = ?, completed_at = CURRENT_TIMESTAMP
+        SET status = 'completed', total_tokens = ?, total_cost_usd = ?, duration_ms = ?, completed_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).run(totalTokens, totalDuration, executionId);
+      `).run(totalTokens, totalCostUsd, totalDuration, executionId);
 
       console.log(`\n${t('executionComplete', { 
         duration: (totalDuration / 1000).toFixed(1), 
         tokens: totalTokens.toString(),
-        cost: (totalTokens * 0.000002).toFixed(4) 
+        cost: totalCostUsd.toFixed(4) 
       })}\n`);
 
     } catch (error) {

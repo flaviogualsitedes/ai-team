@@ -25,6 +25,8 @@ export interface ModelConfig {
   cost: ModelCost;
   /** Emoji indicador de custo */
   costEmoji: string;
+  /** Custo estimado por 1k tokens (USD) */
+  costPer1kTokens: number;
   /** Descrição curta para o menu de seleção */
   description: string;
   /** Se requer API key para funcionar */
@@ -55,6 +57,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gemini-3-flash-preview',
     cost: 'free',
     costEmoji: '🟢 NEW',
+    costPer1kTokens: 0.0001,
     description: 'Nova geração — Ultra rápido e inteligente',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
@@ -68,6 +71,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gemini-2.0-flash',
     cost: 'free',
     costEmoji: '🟢 STABLE',
+    costPer1kTokens: 0.0001,
     description: 'Alta performance e baixa latência',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
@@ -81,6 +85,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gemini-flash-latest',
     cost: 'free',
     costEmoji: '🟢 STABLE',
+    costPer1kTokens: 0.0001,
     description: 'O cavalo de batalha do Google',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
@@ -96,6 +101,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gemini-3.1-pro-preview',
     cost: 'low',
     costEmoji: '🟡 $',
+    costPer1kTokens: 0.0012,
     description: 'Raciocínio de última geração (3.1)',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
@@ -109,6 +115,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gemini-2.5-pro',
     cost: 'low',
     costEmoji: '🟡 $',
+    costPer1kTokens: 0.0012,
     description: 'Modelo Pro de alta inteligência',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
@@ -122,6 +129,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gpt-4o-mini',
     cost: 'low',
     costEmoji: '🟡 $',
+    costPer1kTokens: 0.00015,
     description: 'Melhor custo-benefício da OpenAI',
     requiresKey: true,
     envVar: 'OPENAI_API_KEY',
@@ -137,6 +145,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'claude-3-5-sonnet-latest',
     cost: 'medium',
     costEmoji: '🟠 $$',
+    costPer1kTokens: 0.003,
     description: 'O melhor para coding e raciocínio lógico',
     requiresKey: true,
     envVar: 'ANTHROPIC_API_KEY',
@@ -150,6 +159,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'gpt-4o',
     cost: 'medium',
     costEmoji: '🟠 $$',
+    costPer1kTokens: 0.005,
     description: 'O modelo flagship da OpenAI',
     requiresKey: true,
     envVar: 'OPENAI_API_KEY',
@@ -165,6 +175,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'claude-3-opus-latest',
     cost: 'high',
     costEmoji: '🔴 $$$',
+    costPer1kTokens: 0.015,
     description: 'Raciocínio profundo para tarefas ultra-complexas',
     requiresKey: true,
     envVar: 'ANTHROPIC_API_KEY',
@@ -180,6 +191,7 @@ export const MODELS: ModelConfig[] = [
     modelId: 'llama3.2',
     cost: 'local',
     costEmoji: '🟢 LOCAL',
+    costPer1kTokens: 0.0,
     description: 'Modelos locais — privacidade total, zero custo',
     requiresKey: false,
     sdkPackage: 'ai-sdk-ollama',

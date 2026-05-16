@@ -1,45 +1,37 @@
 # Roadmap AITeam
 
-## Fase 1: Scaffolding & CLI Core (FINALIZADO ✅)
+## Fase 1: Scaffolding & CLI Core (CONCLUÍDO ✅)
 - [x] Configuração inicial (TS, tsup, Vitest)
-- [x] Schema SQLite (22 tabelas base)
+- [x] Schema SQLite (Tabelas base: agents, squads, projects, executions)
 - [x] Sistema i18n (pt-BR, en)
-- [x] Comando `aiteam status` (Health check)
 - [x] Comando `aiteam init` (Wizard de projeto)
 - [x] Comando `aiteam config` (API Keys & Vault)
 - [x] Comando `aiteam agent` (CRUD de agentes)
 - [x] Comando `aiteam squad` (Pipeline de agentes)
-- [x] Comando `aiteam logs` (Observabilidade)
+- [x] Comando `aiteam logs` (Visualização de execuções)
 - [x] Orquestrador Base (Execução sequencial)
-- [x] Comando `aiteam company` (Contexto da empresa)
 
-## Fase 2: Inteligência & Integração IDE (EM ANDAMENTO 🚀)
-- [ ] Integração real com Vercel AI SDK
-- [ ] Resolução da "Fonte da Verdade" (Hierarquia de Config)
-- [ ] Injeção de Contexto em IDEs (Cursor/Windsurf/etc)
-- [ ] Sistema de Memória Curta/Longa (Vetores/SQLite)
-- [ ] Guardrails iniciais (Prevenção de loop)
-- [ ] Registro de Erros & Heartbeat
-- [ ] Implementação do Vault (Criptografia real)
-- [ ] Comando `aiteam rule` e `aiteam guardrail`
-- [ ] Comando `aiteam memory` e `aiteam knowledge`
+## Fase 2: Motor de Execução & IA (CONCLUÍDO ✅)
+- [x] Integração com Vercel AI SDK (Google Gemini/OpenAI).
+- [x] Sistema de Vault Seguro (AES-256-GCM para chaves).
+- [x] TruthResolver (Injeção de contexto inteligente).
+- [x] Comando `run` interativo com suporte a `--task`.
+- [x] Histórico de execuções com logs de tokens e duração.
+- **Marco:** Primeira execução real com colaboração entre agentes validada.
 
-## Fase 3: Painel Web & Visualização (UI/UX)
-- [ ] Dashboard (Fastify + React/Vite)
-- [ ] Terminal integrado (Local powershell)
-- [ ] File Explorer (Explorer local)
-- [ ] Interface Isométrica (Gamificação/Animações)
-- [ ] Skins & Customização de Personas
-- [ ] Chat interativo Web-CLI
+## Fase 3: Memória & Dashboard (EM ANDAMENTO 🚧)
+- [ ] **Memória de Longo Prazo:** Sistema de persistência de contexto entre execuções.
+- [ ] **Dashboard Web:** Interface visual com Next.js para monitorar o Squad.
+- [ ] **Análise de Custos:** Gráficos de consumo de tokens e economia.
+- [ ] **Editor Visual:** Interface para montar Squads arrastando componentes.
 
 ## Fase 4: Avançado & Marketplace
-- [ ] Modo Debate & Review
-- [ ] Skills Dinâmicas (Membros aprendem novas skills)
-- [ ] Marketplace de Squads & Agentes
-- [ ] Sistema de Notas/Gamificação do Usuário
-- [ ] Biblioteca Global de Estilos
+- [ ] Modo Debate & Review (Agentes revisam uns aos outros).
+- [ ] Skills Dinâmicas (Membros executam ferramentas externas/scripts).
+- [ ] Marketplace de Squads & Agentes pré-configurados.
+- [ ] Gamificação (Níveis e skins para agentes).
 
 ## Fase 5: SaaS & Escala
-- [ ] Multi-tenant Cloud
-- [ ] Pagamento/Arrecadação (Pague-me um café)
-- [ ] Monitoramento de Custos/Economia
+- [ ] Multi-tenant Cloud.
+- [ ] Monitoramento Global de Performance.
+- [ ] Integração com Slack/Discord/WhatsApp.

@@ -24,6 +24,25 @@ export function runMigrations(db: Database.Database): void {
     migrateV1(db);
     db.pragma('user_version = 1');
   }
+
+  if (currentVersion < 2) {
+    migrateV2(db);
+    db.pragma('user_version = 2');
+  }
+}
+
+/**
+ * Migração v2 — Modelos por passo e Orçamentos.
+ */
+function migrateV2(db: Database.Database): void {
+  db.exec(`
+    -- Adicionar modelo usado no passo
+    ALTER TABLE execution_steps ADD COLUMN model_id TEXT;
+    
+    -- Adicionar orçamentos no projeto
+    ALTER TABLE projects ADD COLUMN token_budget INTEGER DEFAULT 1000000; -- 1M default
+    ALTER TABLE projects ADD COLUMN cost_budget_usd REAL DEFAULT 10.0;     -- $10 default
+  `);
 }
 
 /**
