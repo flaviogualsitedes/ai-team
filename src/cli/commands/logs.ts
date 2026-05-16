@@ -123,7 +123,7 @@ function showExecutionDetails(id: string): void {
 
   console.log(`${chalk.bold('Agentes usados:')}`);
   steps.forEach(s => {
-    console.log(`  ${chalk.bullet} Agente ${chalk.bold(s.agent_name.padEnd(15))} - Tokens: ${s.tokens_used.toString().padEnd(5)} - Custo: ${chalk.green('$' + s.cost_usd.toFixed(4))} - Modelo: ${chalk.dim(s.model_id)}`);
+    console.log(`  • Agente ${chalk.bold(s.agent_name.padEnd(15))} - Tokens: ${s.tokens_used.toString().padEnd(5)} - Custo: ${chalk.green('$' + s.cost_usd.toFixed(4))} - Modelo: ${chalk.dim(s.model_id)}`);
   });
 
   console.log(`\n${chalk.bold.underline('CONTEÚDO GERADO:')}\n`);

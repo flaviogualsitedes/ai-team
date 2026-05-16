@@ -14,6 +14,7 @@ import { getDatabase } from '../db/index.js';
 import { getModelById } from '../llm/models.js';
 import { nanoid } from 'nanoid';
 import { TruthResolver } from './truth-resolver.js';
+import { getToolsForSDK } from '../skills/index.js';
 
 export interface ExecutionOptions {
   projectId: string;
@@ -90,6 +91,8 @@ export class Orchestrator {
           model: google(actualModelId),
           system: context.systemPrompt,
           prompt,
+          tools: getToolsForSDK(),
+          maxSteps: 5,
         });
         
         const duration = (Date.now() - stepStartTime) / 1000;
