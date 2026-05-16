@@ -5,14 +5,15 @@
  * entre agentes, aplicar regras/guardrails e persistir logs de execução.
  */
 
-import { generateText, tool } from 'ai';
-import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import chalk from 'chalk';
 import ora from 'ora';
 import { t } from '../i18n/index.js';
 import { getDatabase } from '../db/index.js';
 import { getModelById } from '../llm/models.js';
 import { nanoid } from 'nanoid';
+import { TruthResolver } from './truth-resolver.js';
 
 export interface ExecutionOptions {
   projectId: string;
@@ -54,7 +55,8 @@ export class Orchestrator {
       VALUES (?, ?, ?, 'running')
     `).run(executionId, projectId, squadId);
 
-    let lastOutput = '';
+    const resolver = new TruthResolver();
+    let lastOutput = 'Nenhum passo anterior.';
     let totalTokens = 0;
     const startTime = Date.now();
 
@@ -63,16 +65,25 @@ export class Orchestrator {
         const stepStartTime = Date.now();
         const modelConfig = getModelById(agent.model);
         
+        // Resolver contexto (Prompt do Sistema + API Key)
+        const context = await resolver.resolveAgentContext(projectId, agent.id);
+
         if (options.onStepStart) {
           options.onStepStart(agent.name, modelConfig?.name || agent.model);
         }
 
-        // TODO: Implementar lógica real de chamada ao LLM com Vercel AI SDK
-        // Por enquanto, simulando execução para validar o fluxo do CLI
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Configurar Provedor (Exemplo Google)
+        const google = createGoogleGenerativeAI({ apiKey: context.apiKey });
+
+        // Execução Real
+        const { text, usage } = await generateText({
+          model: google(context.model),
+          system: context.systemPrompt,
+          prompt: `CONTEXTO DO PASSO ANTERIOR:\n${lastOutput}\n\nSUA TAREFA: Processe as informações acima e execute seu papel.`,
+        });
         
         const duration = (Date.now() - stepStartTime) / 1000;
-        const tokens = Math.floor(Math.random() * 500) + 100; // Simulado
+        const tokens = usage.totalTokens;
         totalTokens += tokens;
 
         if (options.onStepComplete) {
@@ -83,9 +94,9 @@ export class Orchestrator {
         this.db.prepare(`
           INSERT INTO execution_steps (id, execution_id, agent_id, step_number, output_full, status, tokens_used, duration_ms)
           VALUES (?, ?, ?, ?, ?, 'completed', ?, ?)
-        `).run(nanoid(), executionId, agent.id, agent.position, `Output do agente ${agent.name}`, tokens, duration * 1000);
+        `).run(nanoid(), executionId, agent.id, agent.position, text, tokens, duration * 1000);
 
-        lastOutput = `Resultado de ${agent.name}`;
+        lastOutput = text;
       }
 
       // Finalizar Execução
