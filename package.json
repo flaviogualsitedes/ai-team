@@ -48,7 +48,10 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.78",
     "@ai-sdk/google": "^3.0.75",
+    "@ai-sdk/groq": "^3.0.39",
+    "@ai-sdk/openai": "^3.0.64",
     "@inquirer/prompts": "^7.0.0",
     "ai": "^6.0.184",
     "better-sqlite3": "^12.10.0",

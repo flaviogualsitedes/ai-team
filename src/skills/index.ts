@@ -4,6 +4,7 @@
 
 import { readFileSkill, listDirSkill } from './file-system.js';
 import { SkillRegistry } from './types.js';
+import { tool } from 'ai';
 
 /**
  * Mapa de todas as ferramentas disponíveis para os agentes.
@@ -20,11 +21,11 @@ export function getToolsForSDK() {
   const tools: any = {};
   
   for (const skill of Object.values(ALL_SKILLS)) {
-    tools[skill.name] = {
+    tools[skill.name] = tool({
       description: skill.description,
       parameters: skill.parameters,
       execute: skill.execute,
-    };
+    });
   }
   
   return tools;

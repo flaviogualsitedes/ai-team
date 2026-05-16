@@ -91,7 +91,11 @@ export function registerRunCommand(program: Command): void {
           }
         });
       } catch (error) {
-        spinner.fail(t('executionFailed', { error: error instanceof Error ? error.message : String(error) }));
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        spinner.fail(chalk.red(`❌ Execução falhou: ${errorMsg}`));
+        if (error instanceof Error && error.stack) {
+          console.log(chalk.dim(error.stack));
+        }
       }
     });
 }

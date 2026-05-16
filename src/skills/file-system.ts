@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import nodePath from 'node:path';
 import { Skill } from './types.js';
 
 /**
@@ -14,11 +14,11 @@ export const readFileSkill: Skill = {
   name: 'read_file',
   description: 'Lê o conteúdo completo de um arquivo de texto no projeto.',
   parameters: z.object({
-    filePath: z.string().describe('Caminho relativo do arquivo (ex: src/index.ts)'),
+    path: z.string().describe('Caminho relativo do arquivo (ex: src/index.ts)'),
   }),
-  execute: async ({ filePath }) => {
+  execute: async ({ path: filePath }) => {
     try {
-      const fullPath = path.resolve(process.cwd(), filePath);
+      const fullPath = nodePath.resolve(process.cwd(), filePath);
       
       // Segurança: Não permitir ler fora do diretório do projeto
       if (!fullPath.startsWith(process.cwd())) {
@@ -40,11 +40,11 @@ export const listDirSkill: Skill = {
   name: 'list_dir',
   description: 'Lista os arquivos e pastas de um diretório específico.',
   parameters: z.object({
-    dirPath: z.string().default('.').describe('Caminho do diretório (padrão é a raiz)'),
+    path: z.string().default('.').describe('Caminho do diretório (padrão é a raiz)'),
   }),
-  execute: async ({ dirPath }) => {
+  execute: async ({ path: dirPath }) => {
     try {
-      const fullPath = path.resolve(process.cwd(), dirPath);
+      const fullPath = nodePath.resolve(process.cwd(), dirPath);
       
       if (!fullPath.startsWith(process.cwd())) {
         return { error: 'Acesso negado: Caminho fora do diretório do projeto.' };

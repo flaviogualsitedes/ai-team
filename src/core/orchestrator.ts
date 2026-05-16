@@ -7,6 +7,9 @@
 
 import { generateText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGroq } from '@ai-sdk/groq';
 import chalk from 'chalk';
 import ora from 'ora';
 import { t } from '../i18n/index.js';
@@ -68,47 +71,79 @@ export class Orchestrator {
         const stepStartTime = Date.now();
         const modelConfig = getModelById(agent.model);
         
-        // Resolver contexto (Prompt do Sistema + API Key)
+        // Resolver contexto (Prompt do Sistema + API Key + Provedor)
         const context = await resolver.resolveAgentContext(projectId, agent.id);
 
         if (options.onStepStart) {
           options.onStepStart(agent.name, modelConfig?.name || agent.model);
         }
 
-        // Configurar Provedor (Exemplo Google)
-        const google = createGoogleGenerativeAI({ apiKey: context.apiKey });
-
-        // Usar o modelId real para o SDK
+        // Configurar Provedor Dinamicamente
+        let providerInstance;
         const actualModelId = modelConfig?.modelId || context.model;
+
+        if (context.provider === 'google') {
+          providerInstance = createGoogleGenerativeAI({ apiKey: context.apiKey })(actualModelId);
+        } else if (context.provider === 'openai') {
+          providerInstance = createOpenAI({ apiKey: context.apiKey })(actualModelId);
+        } else if (context.provider === 'anthropic') {
+          providerInstance = createAnthropic({ apiKey: context.apiKey })(actualModelId);
+        } else if (context.provider === 'groq') {
+          providerInstance = createGroq({ apiKey: context.apiKey })(actualModelId);
+        } else {
+          throw new Error(`Provedor '${context.provider}' não suportado pelo Orquestrador.`);
+        }
 
         // Definir a tarefa
         const prompt = (index === 0 && options.initialTask)
           ? `SUA MISSÃO INICIAL:\n${options.initialTask}`
           : `CONTEXTO DO PASSO ANTERIOR:\n${lastOutput}\n\nSUA TAREFA: Processe as informações acima e continue o trabalho.`;
 
+        const stepId = nanoid();
+
         // Execução Real
         const result = await generateText({
-          model: google(actualModelId),
+          model: providerInstance,
           system: context.systemPrompt,
           prompt,
           tools: getToolsForSDK(),
           maxSteps: 5,
         });
 
-        // Consolidar texto de todos os passos (importante para tool calls)
-        const text = result.steps
-          .map(step => step.text)
-          .filter(t => t && t.trim().length > 0)
-          .join('\n\n');
+        // Consolidar texto de todos os passos
+        let text = result.text;
+        
+        if (!text || text.trim().length === 0) {
+          text = result.steps
+            .flatMap(s => s.content)
+            .filter(part => part.type === 'text')
+            .map(part => (part as any).text)
+            .filter(t => t && t.trim().length > 0)
+            .join('\n\n');
+        }
 
-        console.log(`Debug - Passo ${index + 1} concluído para agente ${agent.name}`);
+        if (!text || text.trim().length === 0) {
+          const toolData = result.steps
+            .flatMap(s => (s as any).content || [])
+            .filter(p => p.type === 'tool-result')
+            .map(tr => {
+              const res = (tr as any).result || (tr as any).output;
+              const finalVal = (res && typeof res === 'object' && 'value' in res) ? res.value : res;
+              return `[Skill: ${(tr as any).toolName}]\n${typeof finalVal === 'object' ? JSON.stringify(finalVal, null, 2) : finalVal}`;
+            })
+            .join('\n\n');
+          
+          if (toolData) {
+            text = `O agente executou ferramentas mas não gerou um resumo. Resultados brutos:\n\n${toolData}`;
+          }
+        }
 
         const usage = result.usage;
         const duration = (Date.now() - stepStartTime) / 1000;
         const tokens = usage.totalTokens;
         const stepCost = (tokens / 1000) * (modelConfig?.costPer1kTokens || 0);
 
-        // Salvar Passo
+        // Salvar Passo no Banco
         this.db.prepare(`
           INSERT INTO execution_steps (id, execution_id, agent_id, step_number, output_full, status, tokens_used, cost_usd, model_id, duration_ms)
           VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?)

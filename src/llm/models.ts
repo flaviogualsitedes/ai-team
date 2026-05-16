@@ -6,7 +6,7 @@
  */
 
 /** Providers de LLM suportados */
-export type ModelProvider = 'google' | 'anthropic' | 'openai' | 'ollama';
+export type ModelProvider = 'google' | 'anthropic' | 'openai' | 'ollama' | 'groq';
 
 /** Classificação de custo */
 export type ModelCost = 'free' | 'low' | 'medium' | 'high' | 'local';
@@ -19,7 +19,7 @@ export interface ModelConfig {
   name: string;
   /** Provider do SDK */
   provider: ModelProvider;
-  /** ID real passado ao SDK (ex: 'gemini-3-flash-preview') */
+  /** ID real passado ao SDK (ex: 'gemini-1.5-flash') */
   modelId: string;
   /** Classificação de custo */
   cost: ModelCost;
@@ -46,83 +46,81 @@ export interface ModelConfig {
 
 /**
  * Catálogo completo de modelos disponíveis.
- * Ordenado por custo (gratuitos primeiro).
+ * Ordenado por relevância e capacidade.
  */
 export const MODELS: ModelConfig[] = [
-  // === ESTÁVEIS (RECOMENDADOS) ===
+  // === GOOGLE GEMINI (AI STUDIO) ===
   {
-    id: 'gemini-flash-latest',
-    name: 'Gemini 1.5 Flash (Estável)',
+    id: 'gemini-2.0-flash-exp',
+    name: 'Gemini 2.0 Flash (Exp)',
     provider: 'google',
-    modelId: 'gemini-flash-latest',
+    modelId: 'gemini-2.0-flash-exp',
     cost: 'free',
-    costEmoji: '🟢 STABLE',
-    costPer1kTokens: 0.0001,
-    description: 'O cavalo de batalha do Google — Ideal para Skills',
+    costEmoji: '⚡ NEXT-GEN',
+    costPer1kTokens: 0.0,
+    description: 'Ultra velocidade e visão aprimorada (Experimental)',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
     sdkPackage: '@ai-sdk/google',
     features: { tools: true, vision: true, streaming: true },
   },
   {
-    id: 'gemini-2.0-flash',
-    name: 'Gemini 2.0 Flash',
+    id: 'gemini-2.0-pro-exp',
+    name: 'Gemini 2.0 Pro (Exp)',
     provider: 'google',
-    modelId: 'gemini-2.0-flash',
+    modelId: 'gemini-2.0-pro-exp-02-05',
     cost: 'free',
-    costEmoji: '🟢 STABLE',
-    costPer1kTokens: 0.0001,
-    description: 'Alta performance e baixa latência',
-    requiresKey: true,
-    envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
-    sdkPackage: '@ai-sdk/google',
-    features: { tools: true, vision: true, streaming: true },
-  },
-
-  // === PREVIEW / EXPERIMENTAL ===
-  {
-    id: 'gemini-3-flash',
-    name: 'Gemini 3 Flash (Preview)',
-    provider: 'google',
-    modelId: 'gemini-3-flash-preview',
-    cost: 'free',
-    costEmoji: '🟡 NEW',
-    costPer1kTokens: 0.0001,
-    description: 'Nova geração — Ultra rápido (requer thought signature)',
-    requiresKey: true,
-    envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
-    sdkPackage: '@ai-sdk/google',
-    features: { tools: true, vision: true, streaming: true },
-  },
-
-  // === BAIXO CUSTO / PRO ===
-  {
-    id: 'gemini-3.1-pro',
-    name: 'Gemini 3.1 Pro (Preview)',
-    provider: 'google',
-    modelId: 'gemini-3.1-pro-preview',
-    cost: 'low',
-    costEmoji: '🟡 $',
-    costPer1kTokens: 0.0012,
-    description: 'Raciocínio de última geração (3.1)',
+    costEmoji: '🧠 ELITE',
+    costPer1kTokens: 0.0,
+    description: 'Raciocínio complexo e janelas gigantes (Experimental)',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
     sdkPackage: '@ai-sdk/google',
     features: { thinking: true, tools: true, vision: true, streaming: true },
   },
   {
-    id: 'gemini-2.5-pro',
-    name: 'Gemini 2.5 Pro',
+    id: 'gemini-1.5-pro',
+    name: 'Gemini 1.5 Pro',
     provider: 'google',
-    modelId: 'gemini-2.5-pro',
+    modelId: 'gemini-1.5-pro',
     cost: 'low',
-    costEmoji: '🟡 $',
-    costPer1kTokens: 0.0012,
-    description: 'Modelo Pro de alta inteligência',
+    costEmoji: '🟢 STABLE',
+    costPer1kTokens: 0.00125,
+    description: 'Equilíbrio perfeito entre inteligência e velocidade',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
     sdkPackage: '@ai-sdk/google',
-    features: { thinking: true, tools: true, vision: true, streaming: true },
+    features: { tools: true, vision: true, streaming: true },
+  },
+  {
+    id: 'gemini-1.5-flash',
+    name: 'Gemini 1.5 Flash',
+    provider: 'google',
+    modelId: 'gemini-1.5-flash',
+    cost: 'free',
+    costEmoji: '🟢 FAST',
+    costPer1kTokens: 0.0001,
+    description: 'Otimizado para tarefas rápidas e alto throughput',
+    requiresKey: true,
+    envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
+    sdkPackage: '@ai-sdk/google',
+    features: { tools: true, vision: true, streaming: true },
+  },
+
+  // === OPENAI ===
+  {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    provider: 'openai',
+    modelId: 'gpt-4o',
+    cost: 'medium',
+    costEmoji: '🟠 FLAGSHIP',
+    costPer1kTokens: 0.005,
+    description: 'Líder em versatilidade e seguimento de instruções',
+    requiresKey: true,
+    envVar: 'OPENAI_API_KEY',
+    sdkPackage: '@ai-sdk/openai',
+    features: { tools: true, vision: true, streaming: true },
   },
   {
     id: 'gpt-4o-mini',
@@ -130,73 +128,44 @@ export const MODELS: ModelConfig[] = [
     provider: 'openai',
     modelId: 'gpt-4o-mini',
     cost: 'low',
-    costEmoji: '🟡 $',
+    costEmoji: '🟢 ECONOMY',
     costPer1kTokens: 0.00015,
-    description: 'Melhor custo-benefício da OpenAI',
+    description: 'Extremamente barato e surpreendentemente capaz',
     requiresKey: true,
     envVar: 'OPENAI_API_KEY',
     sdkPackage: '@ai-sdk/openai',
     features: { tools: true, vision: true, streaming: true },
   },
 
-  // === MÉDIO ===
+  // === ANTHROPIC ===
   {
     id: 'claude-3-5-sonnet',
     name: 'Claude 3.5 Sonnet',
     provider: 'anthropic',
     modelId: 'claude-3-5-sonnet-latest',
     cost: 'medium',
-    costEmoji: '🟠 $$',
+    costEmoji: '🟠 CODING',
     costPer1kTokens: 0.003,
-    description: 'O melhor para coding e raciocínio lógico',
-    requiresKey: true,
-    envVar: 'ANTHROPIC_API_KEY',
-    sdkPackage: '@ai-sdk/anthropic',
-    features: { thinking: true, tools: true, vision: true, streaming: true },
-  },
-  {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
-    provider: 'openai',
-    modelId: 'gpt-4o',
-    cost: 'medium',
-    costEmoji: '🟠 $$',
-    costPer1kTokens: 0.005,
-    description: 'O modelo flagship da OpenAI',
-    requiresKey: true,
-    envVar: 'OPENAI_API_KEY',
-    sdkPackage: '@ai-sdk/openai',
-    features: { tools: true, vision: true, streaming: true },
-  },
-
-  // === ALTO ===
-  {
-    id: 'claude-3-opus',
-    name: 'Claude 3 Opus',
-    provider: 'anthropic',
-    modelId: 'claude-3-opus-latest',
-    cost: 'high',
-    costEmoji: '🔴 $$$',
-    costPer1kTokens: 0.015,
-    description: 'Raciocínio profundo para tarefas ultra-complexas',
+    description: 'Padrão ouro para desenvolvimento e escrita natural',
     requiresKey: true,
     envVar: 'ANTHROPIC_API_KEY',
     sdkPackage: '@ai-sdk/anthropic',
     features: { thinking: true, tools: true, vision: true, streaming: true },
   },
 
-  // === LOCAL ===
+  // === GROQ (ULTRA FAST) ===
   {
-    id: 'ollama',
-    name: 'Ollama (Local)',
-    provider: 'ollama',
-    modelId: 'llama3.2',
-    cost: 'local',
-    costEmoji: '🟢 LOCAL',
-    costPer1kTokens: 0.0,
-    description: 'Modelos locais — privacidade total, zero custo',
-    requiresKey: false,
-    sdkPackage: 'ai-sdk-ollama',
+    id: 'llama-3.3-70b-groq',
+    name: 'Llama 3.3 70B (Groq)',
+    provider: 'groq',
+    modelId: 'llama-3.3-70b-versatile',
+    cost: 'low',
+    costEmoji: '⚡ SPEED',
+    costPer1kTokens: 0.0006,
+    description: 'Respostas instantâneas via LPU hardware',
+    requiresKey: true,
+    envVar: 'GROQ_API_KEY',
+    sdkPackage: '@ai-sdk/openai', // Groq usa SDK compatível com OpenAI
     features: { tools: true, streaming: true },
   },
 ];
@@ -209,10 +178,10 @@ export function getModelById(id: string): ModelConfig | undefined {
 }
 
 /**
- * Retorna o modelo padrão (Gemini 3 Flash).
+ * Retorna o modelo padrão (Gemini 1.5 Flash).
  */
 export function getDefaultModel(): ModelConfig {
-  return MODELS[0];
+  return MODELS.find(m => m.id === 'gemini-1.5-flash') || MODELS[0];
 }
 
 /**

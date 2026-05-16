@@ -1,0 +1,10 @@
+{
+  "executionStarted": "▶️ Running squad '{{squad}}'...",
+  "executionStepStarted": "🤖 {{agent}} [{{model}}]",
+  "executionStepComplete": "✔ ✅ Complete ({{duration}}s, {{tokens}} tokens)",
+  "executionFailed": "✖ ❌ Execution failed: {{error}}",
+  "projectNotFound": "Project not found in this directory. Use 'aiteam init'.",
+  "commands": {
+    "run": "Run a squad of agents in the current project"
+  }
+}
