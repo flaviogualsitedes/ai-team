@@ -7,6 +7,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
+import * as prompts from '@inquirer/prompts';
 import { t } from '../../i18n/index.js';
 import { getDatabase } from '../../db/index.js';
 import { Orchestrator } from '../../core/orchestrator.js';
@@ -18,14 +19,30 @@ export function registerRunCommand(program: Command): void {
   program
     .command('run')
     .description(t('commands.run'))
-    .argument('<squad>', 'Nome do squad a ser executado')
+    .argument('[squad]', 'Nome do squad a ser executado')
     .option('--dry-run', 'Apenas preview do pipeline')
     .option('--project <id>', 'ID do projeto (opcional, usa o atual por padrão)')
-    .action(async (squadName, options) => {
+    .action(async (squadArg, options) => {
       const db = getDatabase();
       const currentDir = process.cwd();
+      let squadName = squadArg;
 
-      // 1. Validar Squad
+      // 1. Se não passou nome, oferecer lista
+      if (!squadName) {
+        const squads = db.prepare('SELECT name FROM squads').all() as { name: string }[];
+        
+        if (squads.length === 0) {
+          console.log(chalk.yellow(`\nNenhum squad encontrado. Crie um com 'aiteam squad create'.\n`));
+          return;
+        }
+
+        squadName = await prompts.select({
+          message: 'Selecione o squad para executar:',
+          choices: squads.map(s => ({ name: s.name, value: s.name })),
+        });
+      }
+
+      // 2. Validar Squad
       const squad = db.prepare('SELECT id FROM squads WHERE name = ?').get(squadName) as any;
       if (!squad) {
         console.log(chalk.red(`\nSquad '${squadName}' não encontrado.\n`));

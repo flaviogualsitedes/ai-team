@@ -114,7 +114,7 @@ export class Orchestrator {
       })}\n`);
 
     } catch (error) {
-      this.db.prepare('UPDATE executions SET status = "failed" WHERE id = ?').run(executionId);
+      this.db.prepare("UPDATE executions SET status = 'failed' WHERE id = ?").run(executionId);
       throw error;
     }
   }
