@@ -118,4 +118,53 @@ export function registerConfigCommand(program: Command): void {
         console.log(`\n${t('configReset')}\n`);
       }
     });
+
+  // 5. config list-models <provider>
+  config
+    .command('list-models')
+    .argument('<provider>', 'google | openai | anthropic')
+    .description('Lista os modelos disponíveis no provedor usando sua API Key')
+    .action(async (provider) => {
+      if (provider !== 'google') {
+        console.log(chalk.yellow(`\nAinda não implementado para ${provider}. Tente 'google'.\n`));
+        return;
+      }
+
+      const db = getDatabase();
+      const keyRecord = db.prepare('SELECT api_key FROM api_keys WHERE provider = ?').get('google') as any;
+
+      if (!keyRecord) {
+        console.log(chalk.red('\nErro: API Key do Google não encontrada. Configure com "aiteam config set-key google".\n'));
+        return;
+      }
+
+      const apiKey = Vault.decrypt(keyRecord.api_key);
+      const { default: ora } = await import('ora');
+      const spinner = ora('Buscando modelos no Google...').start();
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const data = await response.json() as any;
+
+        spinner.stop();
+
+        if (data.error) {
+          console.log(chalk.red(`\n❌ Erro da API: ${data.error.message}\n`));
+          return;
+        }
+
+        console.log(`\n${chalk.bold.green('✅ Modelos disponíveis para sua chave Google:')}\n`);
+        
+        data.models
+          .filter((m: any) => m.supportedGenerationMethods.includes('generateContent'))
+          .forEach((m: any) => {
+            console.log(`${chalk.cyan('•')} ${chalk.bold(m.name.replace('models/', ''))} ${chalk.dim(`(${m.displayName})`)}`);
+          });
+        console.log('');
+
+      } catch (error: any) {
+        spinner.stop();
+        console.log(chalk.red(`\n❌ Erro ao conectar: ${error.message}\n`));
+      }
+    });
 }
