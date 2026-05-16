@@ -1,0 +1,33 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+
+# Ambiente
+.env
+.env.local
+
+# Banco de dados (global — não deve ir pro repo)
+*.db
+*.db-journal
+
+# Vault criptografado
+vault.enc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testes
+coverage/
+
+# Logs
+*.log
+npm-debug.log*

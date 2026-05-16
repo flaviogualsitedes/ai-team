@@ -1,0 +1,68 @@
+{
+  "name": "aiteam",
+  "version": "0.1.0",
+  "description": "Framework de orquestração multi-agente com memória persistente, isolamento por projeto e integração com IDEs",
+  "type": "module",
+  "bin": {
+    "aiteam": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "multi-agent",
+    "orchestration",
+    "llm",
+    "gemini",
+    "claude",
+    "openai",
+    "ollama",
+    "cli",
+    "aiteam"
+  ],
+  "author": "Flávio Gualsitedes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flaviogualsitedes/ai-team.git"
+  },
+  "bugs": {
+    "url": "https://github.com/flaviogualsitedes/ai-team/issues"
+  },
+  "homepage": "https://github.com/flaviogualsitedes/ai-team#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^1.0.0",
+    "@inquirer/prompts": "^7.0.0",
+    "ai": "^4.0.0",
+    "better-sqlite3": "^12.10.0",
+    "chalk": "^5.3.0",
+    "commander": "^13.0.0",
+    "nanoid": "^5.0.0",
+    "ora": "^8.0.0",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
