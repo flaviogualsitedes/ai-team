@@ -96,8 +96,17 @@ export function getDashboardStats(): DashboardStats {
 export function getAgents() {
   const database = getDb();
   return database.prepare(`
-    SELECT id, name, role, personality, model, created_at as createdAt 
-    FROM agents ORDER BY name ASC
+    SELECT a.id, a.name, a.role, a.personality, a.model, a.created_at as createdAt,
+    (SELECT COUNT(*) FROM squad_members WHERE agent_id = a.id) as squadCount,
+    (SELECT COUNT(DISTINCT execution_id) FROM execution_steps WHERE agent_id = a.id) as projectCount,
+    (SELECT AVG(duration_ms) FROM execution_steps WHERE agent_id = a.id) as avgDuration,
+    (SELECT SUM(cost_usd) FROM execution_steps WHERE agent_id = a.id) as totalCost,
+    (SELECT 
+       CASE WHEN COUNT(*) > 0 
+       THEN (CAST(COUNT(CASE WHEN status = 'completed' THEN 1 END) AS FLOAT) / COUNT(*)) * 100 
+       ELSE 0 END 
+     FROM execution_steps WHERE agent_id = a.id) as successRate
+    FROM agents a ORDER BY a.name ASC
   `).all() as any[];
 }
 
@@ -117,6 +126,19 @@ export function updateAgent(id: string, data: any) {
     .join(', ');
   const values = [...Object.values(data), id];
   return database.prepare(`UPDATE agents SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(...values);
+}
+
+export function createAgent(data: { id: string, name: string, role: string, personality?: string, model: string, tools?: string }) {
+  const database = getDb();
+  return database.prepare(`
+    INSERT INTO agents (id, name, role, personality, model, tools)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(data.id, data.name, data.role, data.personality || null, data.model, data.tools || '[]');
+}
+
+export function deleteAgent(id: string) {
+  const database = getDb();
+  return database.prepare('DELETE FROM agents WHERE id = ?').run(id);
 }
 
 // ========================================

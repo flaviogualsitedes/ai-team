@@ -12,16 +12,18 @@ import {
   Settings,
   Shield,
   Zap,
-  Activity
+  Activity,
+  MessageSquare,
+  Command
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+  { icon: MessageSquare, label: 'Command Center', href: '/chat' },
   { icon: UserRound, label: 'Agentes', href: '/agents' },
   { icon: Users, label: 'Squads', href: '/squads' },
   { icon: Activity, label: 'Execuções', href: '/executions' },
-  { icon: Settings, label: 'Configurações', href: '/settings' },
 ];
 
 const secondaryItems = [
