@@ -9,6 +9,7 @@ import chalk from 'chalk';
 import * as prompts from '@inquirer/prompts';
 import { t } from '../../i18n/index.js';
 import { getDatabase } from '../../db/index.js';
+import { Vault } from '../../core/vault.js';
 
 /**
  * Registra o comando 'config' no programa principal.
@@ -62,12 +63,14 @@ export function registerConfigCommand(program: Command): void {
         mask: '*',
       });
 
+      const encryptedKey = Vault.encrypt(key);
+
       const db = getDatabase();
       db.prepare(`
         INSERT INTO api_keys (provider, api_key)
         VALUES (?, ?)
         ON CONFLICT(provider) DO UPDATE SET api_key = excluded.api_key, updated_at = CURRENT_TIMESTAMP
-      `).run(provider, key);
+      `).run(provider, encryptedKey);
 
       console.log(`\n${t('keySet', { provider: chalk.bold(provider) })}\n`);
     });
@@ -86,8 +89,13 @@ export function registerConfigCommand(program: Command): void {
         console.log(`  ${chalk.dim(t('noKeysFound', { default: 'Nenhuma chave encontrada.' }))}`);
       } else {
         keys.forEach(k => {
-          const masked = k.api_key.substring(0, 4) + '...' + k.api_key.substring(k.api_key.length - 4);
-          console.log(`  ${chalk.yellow(k.provider.padEnd(10))}: ${chalk.green(masked)}`);
+          try {
+            const decrypted = Vault.decrypt(k.api_key);
+            const masked = decrypted.substring(0, 4) + '...' + decrypted.substring(decrypted.length - 4);
+            console.log(`  ${chalk.yellow(k.provider.padEnd(10))}: ${chalk.green(masked)}`);
+          } catch (e) {
+            console.log(`  ${chalk.yellow(k.provider.padEnd(10))}: ${chalk.red('ERRO DE DESCRIPTOGRAFIA')}`);
+          }
         });
       }
       console.log('\n');

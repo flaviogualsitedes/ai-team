@@ -7,6 +7,7 @@
 
 import { getDatabase } from '../db/index.js';
 import fs from 'node:fs';
+import { Vault } from './vault.js';
 
 export interface ResolvedContext {
   systemPrompt: string;
@@ -70,7 +71,7 @@ export class TruthResolver {
     return {
       systemPrompt,
       model: agent.model,
-      apiKey: keyRecord.api_key,
+      apiKey: Vault.decrypt(keyRecord.api_key),
     };
   }
 
