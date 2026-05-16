@@ -49,16 +49,16 @@ export interface ModelConfig {
  * Ordenado por custo (gratuitos primeiro).
  */
 export const MODELS: ModelConfig[] = [
-  // === GRATUITOS / PREVIEW ===
+  // === ESTÁVEIS (RECOMENDADOS) ===
   {
-    id: 'gemini-3-flash',
-    name: 'Gemini 3 Flash (Preview)',
+    id: 'gemini-flash-latest',
+    name: 'Gemini 1.5 Flash (Estável)',
     provider: 'google',
-    modelId: 'gemini-3-flash-preview',
+    modelId: 'gemini-1.5-flash',
     cost: 'free',
-    costEmoji: '🟢 NEW',
+    costEmoji: '🟢 STABLE',
     costPer1kTokens: 0.0001,
-    description: 'Nova geração — Ultra rápido e inteligente',
+    description: 'O cavalo de batalha do Google — Ideal para Skills',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
     sdkPackage: '@ai-sdk/google',
@@ -78,15 +78,17 @@ export const MODELS: ModelConfig[] = [
     sdkPackage: '@ai-sdk/google',
     features: { tools: true, vision: true, streaming: true },
   },
+
+  // === PREVIEW / EXPERIMENTAL ===
   {
-    id: 'gemini-flash-latest',
-    name: 'Gemini 1.5 Flash (Latest)',
+    id: 'gemini-3-flash',
+    name: 'Gemini 3 Flash (Preview)',
     provider: 'google',
-    modelId: 'gemini-flash-latest',
+    modelId: 'gemini-3-flash-preview',
     cost: 'free',
-    costEmoji: '🟢 STABLE',
+    costEmoji: '🟡 NEW',
     costPer1kTokens: 0.0001,
-    description: 'O cavalo de batalha do Google',
+    description: 'Nova geração — Ultra rápido (requer thought signature)',
     requiresKey: true,
     envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
     sdkPackage: '@ai-sdk/google',
