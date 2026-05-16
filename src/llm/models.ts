@@ -54,7 +54,7 @@ export const MODELS: ModelConfig[] = [
     id: 'gemini-flash-latest',
     name: 'Gemini 1.5 Flash (Estável)',
     provider: 'google',
-    modelId: 'gemini-1.5-flash-latest',
+    modelId: 'gemini-flash-latest',
     cost: 'free',
     costEmoji: '🟢 STABLE',
     costPer1kTokens: 0.0001,

@@ -16,6 +16,7 @@ import { registerAgentCommand } from './cli/commands/agent.js';
 import { registerSquadCommand } from './cli/commands/squad.js';
 import { registerRunCommand } from './cli/commands/run.js';
 import { registerLogsCommand } from './cli/commands/logs.js';
+import { registerDebugCommand } from './cli/commands/debug.js';
 
 /** Versão do AITeam — sincronizada com package.json */
 const VERSION = '0.1.0';
@@ -40,6 +41,7 @@ function createProgram(): Command {
   registerSquadCommand(program);
   registerRunCommand(program);
   registerLogsCommand(program);
+  registerDebugCommand(program);
 
   // TODO: Registrar demais comandos conforme implementados
   // registerConfigCommand(program);
