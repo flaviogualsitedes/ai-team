@@ -25,21 +25,47 @@ export function registerSquadCommand(program: Command): void {
     .description(t('commands.squadCreate'))
     .action(async () => {
       const db = getDatabase();
-      const agents = db.prepare('SELECT id, name FROM agents').all() as any[];
+    const agents = db.prepare('SELECT id, name FROM agents').all() as any[];
 
-      if (agents.length === 0) {
-        console.log(chalk.yellow(`\n${t('noAgentsFound')} Crie agentes primeiro com 'aiteam agent create'.\n`));
-        return;
-      }
+    const name = await prompts.input({ message: t('askSquadName') });
+    const description = await prompts.input({ message: t('askSquadDescription') });
+    
+    // Preparar lista com opção de criar novo
+    const choices = [
+      ...agents.map(a => ({ name: a.name, value: a.id })),
+      { name: chalk.green(' [+ Criar Novo Agente]'), value: 'create_new' }
+    ];
 
-      const name = await prompts.input({ message: t('askSquadName') });
-      const description = await prompts.input({ message: t('askSquadDescription') });
+    let selectedAgents = await prompts.checkbox({
+      message: `${t('askSquadMembers')} (Use ESPAÇO para selecionar)`,
+      choices,
+      validate: (input) => input.length > 0 ? true : 'Selecione ao menos um agente ou crie um novo.',
+    });
+
+    // Se escolheu criar novo agente, vamos pro loop de criação
+    if (selectedAgents.includes('create_new')) {
+      // Remover o flag 'create_new'
+      selectedAgents = selectedAgents.filter(id => id !== 'create_new');
+
+      console.log(chalk.cyan('\n--- Criando Novo Agente ---'));
+      const newAgent = {
+        name: await prompts.input({ message: t('askAgentName') }),
+        role: await prompts.input({ message: t('askAgentRole') }),
+        model: await prompts.select({
+          message: t('askAgentModel'),
+          choices: (await import('../../llm/models.js')).MODELS.map(m => ({ name: `${m.costEmoji} ${m.name}`, value: m.id })),
+        }),
+      };
+
+      const agentId = (await import('nanoid')).nanoid();
+      db.prepare(`
+        INSERT INTO agents (id, name, role, model)
+        VALUES (?, ?, ?, ?)
+      `).run(agentId, newAgent.name, newAgent.role, newAgent.model);
       
-      const selectedAgents = await prompts.checkbox({
-        message: t('askSquadMembers'),
-        choices: agents.map(a => ({ name: a.name, value: a.id })),
-        validate: (input) => input.length > 0 ? true : 'Selecione ao menos um agente.',
-      });
+      selectedAgents.push(agentId);
+      console.log(chalk.green(`Agente '${newAgent.name}' criado e adicionado ao squad!\n`));
+    }
 
       const squadId = nanoid();
       
