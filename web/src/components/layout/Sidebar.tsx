@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -14,7 +14,9 @@ import {
   Zap,
   Activity,
   MessageSquare,
-  Command
+  Command,
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +35,27 @@ const secondaryItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleUpdate = async () => {
+    setIsUpdating(true);
+    setUpdateStatus('idle');
+    try {
+      const res = await fetch('/api/system/update', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setUpdateStatus('success');
+        setTimeout(() => setUpdateStatus('idle'), 3000);
+      } else {
+        setUpdateStatus('error');
+      }
+    } catch (err) {
+      setUpdateStatus('error');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <aside className="w-64 h-screen glass-panel border-r border-border/50 flex flex-col fixed left-0 top-0 z-50">
@@ -89,9 +112,23 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-border/50">
-        <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-          <div className="text-xs text-muted-foreground mb-1 italic">CLI Version</div>
-          <div className="text-sm font-mono text-primary font-bold">v0.1.0-beta</div>
+        <div className="bg-white/5 rounded-xl p-4 border border-white/5 flex items-center justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground mb-1 italic">CLI Version</div>
+            <div className="text-sm font-mono text-primary font-bold">v0.1.0-beta</div>
+          </div>
+          <button 
+            onClick={handleUpdate}
+            disabled={isUpdating}
+            className={cn(
+              "p-2 rounded-lg transition-all duration-300",
+              updateStatus === 'success' ? "bg-green-500/20 text-green-400" : "bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-primary",
+              isUpdating && "animate-spin"
+            )}
+            title="Sincronizar com GitHub"
+          >
+            {updateStatus === 'success' ? <CheckCircle2 size={16} /> : <RefreshCw size={16} />}
+          </button>
         </div>
       </div>
     </aside>

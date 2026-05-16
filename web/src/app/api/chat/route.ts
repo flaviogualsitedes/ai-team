@@ -1,87 +1,139 @@
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText, tool } from 'ai';
-import { getAgents, createAgent, deleteAgent, getApiKeys } from '@/lib/db';
-import { nanoid } from 'nanoid';
 import { z } from 'zod';
+import Database from 'better-sqlite3';
+import path from 'path';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
 
 export const maxDuration = 30;
 
-export async function POST(req: Request) {
-  const { messages } = await req.json();
+/**
+ * Vault Logic (AES-256-GCM)
+ */
+class VaultInternal {
+  private static masterKey: Buffer;
+  private static KEY_PATH = path.join(os.homedir(), '.aiteam', '.vault_key');
 
-  // 1. Obter a chave do banco
-  const apiKeys = getApiKeys();
-  const geminiKey = apiKeys.find(k => k.provider === 'google')?.apiKey;
-
-  if (!geminiKey) {
-    return new Response('Configuração ausente: GEMINI_API_KEY não encontrada no banco.', { status: 400 });
+  private static init(): void {
+    if (this.masterKey) return;
+    if (!fs.existsSync(this.KEY_PATH)) {
+      throw new Error('Chave mestra do Vault não encontrada. Configure o sistema primeiro.');
+    }
+    this.masterKey = fs.readFileSync(this.KEY_PATH);
   }
 
-  // 2. Configurar o modelo
-  const model = google('gemini-2.0-flash-exp', {
-    apiKey: geminiKey
-  });
+  static decrypt(encryptedData: string): string {
+    try {
+      this.init();
+      const [ivHex, authTagHex, encryptedText] = encryptedData.split(':');
+      if (!ivHex || !authTagHex || !encryptedText) return encryptedData;
 
-  // 3. Executar o Stream com Tools
-  const result = streamText({
-    model,
-    messages,
-    system: `Você é o Magnus Mastermind, o cérebro supremo e mentor da operação no AITeam. 
-    Seu objetivo é gerenciar e orquestrar o time de agentes de elite.
-    
-    DIRETRIZES DE NOMEAÇÃO (PADRÃO MARVEL):
-    - Agentes DEVEM ter um nome próprio e um sobrenome funcional.
-    - REGRA DE OURO: O nome e o sobrenome DEVEM começar com a mesma letra (Aliteração).
-    - Exemplos: Pietra Pixel (Design), Dante Dev (Código), Sara Search (Busca), Vera Vector (AI).
-    
-    CAPACIDADES:
-    - Você pode listar os agentes atuais para entender a equipe.
-    - Você pode recrutar novos agentes de elite se o usuário solicitar.
-    - Você pode remover agentes que não são mais necessários.
-    
-    TOM DE VOZ:
-    - Profissional, pragmático, tecnológico e focado em eficiência.
-    - Use termos como "recrutamento", "deploy", "squad" e "vetorização".`,
-    tools: {
-      listAgents: tool({
-        description: 'Lista todos os agentes atualmente recrutados no AITeam.',
-        parameters: z.object({}),
-        execute: async () => {
-          const agents = getAgents();
-          return agents.map(a => ({
-            id: a.id,
-            name: a.name,
-            role: a.role,
-            model: a.model
-          }));
-        }
-      }),
-      recruitAgent: tool({
-        description: 'Recruta um novo agente de elite para o time.',
-        parameters: z.object({
-          name: z.string().describe('Nome completo (Nome + Sobrenome Funcional)'),
-          role: z.string().describe('Função específica do agente'),
-          personality: z.string().describe('Descrição da personalidade e diretrizes'),
-          model: z.string().describe('ID do modelo (ex: gemini-2.0-flash, gemini-1.5-pro)')
-        }),
-        execute: async ({ name, role, personality, model }) => {
-          const id = nanoid();
-          createAgent({ id, name, role, personality, model });
-          return { success: true, agentId: id, message: `Agente ${name} recrutado com sucesso.` };
-        }
-      }),
-      removeAgent: tool({
-        description: 'Remove um agente do time pelo ID.',
-        parameters: z.object({
-          id: z.string().describe('ID único do agente')
-        }),
-        execute: async ({ id }) => {
-          deleteAgent(id);
-          return { success: true, message: 'Agente removido do sistema.' };
-        }
-      })
+      const iv = Buffer.from(ivHex, 'hex');
+      const authTag = Buffer.from(authTagHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-gcm', this.masterKey, iv);
+      decipher.setAuthTag(authTag);
+      
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch (e) {
+      console.error("Erro na descriptografia do Vault:", e);
+      return encryptedData;
     }
-  });
+  }
+}
 
-  return result.toDataStreamResponse();
+export async function POST(req: Request) {
+  let db: any = null;
+  try {
+    const { messages } = await req.json();
+
+    // 1. Conectar ao Banco de Dados
+    const dbPath = path.resolve(process.cwd(), '../aiteam.db');
+    db = new Database(dbPath);
+
+    // 2. Buscar Configurações Globais
+    const settingsRows = db.prepare('SELECT key, value FROM settings').all() as any[];
+    const settings = settingsRows.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {}) as any;
+
+    const defaultProvider = settings.default_provider || 'google';
+    const defaultModelId = settings.default_model || (defaultProvider === 'google' ? 'gemini-1.5-flash' : 'gpt-4o');
+
+    // 3. Buscar API Key do provedor ativo
+    const keyRecord = db.prepare('SELECT api_key FROM api_keys WHERE provider = ?').get(defaultProvider) as any;
+    
+    if (!keyRecord) {
+      throw new Error(`API Key para o provedor '${defaultProvider}' não encontrada no banco.`);
+    }
+
+    const apiKey = VaultInternal.decrypt(keyRecord.api_key);
+
+    // 4. Instanciar o Provedor Correto com a chave injetada
+    let model;
+    console.log(`[Magnus] Operando com Provedor: ${defaultProvider} | Modelo: ${defaultModelId}`);
+
+    if (defaultProvider === 'google') {
+      const google = createGoogleGenerativeAI({ apiKey });
+      model = google(defaultModelId);
+    } else if (defaultProvider === 'groq') {
+      const groq = createOpenAI({
+        baseURL: 'https://api.groq.com/openai/v1',
+        apiKey: apiKey,
+      });
+      model = groq(defaultModelId);
+    } else if (defaultProvider === 'openai') {
+      const openai = createOpenAI({ apiKey });
+      model = openai(defaultModelId);
+    } else if (defaultProvider === 'anthropic') {
+      const anthropic = createAnthropic({ apiKey });
+      model = anthropic(defaultModelId);
+    } else {
+      // Fallback Google
+      const google = createGoogleGenerativeAI({ apiKey });
+      model = google('gemini-1.5-flash');
+    }
+
+    db.close();
+
+    // 5. Executar o Magnus Mastermind
+    const result = await streamText({
+      model: model as any,
+      messages,
+      system: `Você é o Magnus Mastermind, o orquestrador supremo da plataforma AITeam. 
+      Sua missão é RECRUTAR um novo agente de elite para a squad do usuário. 
+
+      PROTOCOLO:
+      1. Use 'updateDraftSpec' para atualizar o XML de identidade no Spec Forge lateral sempre que houver progresso.
+      2. Mantenha a Regra Marvel de Aliteração (ex: 'Dante Data', 'Sora Sombra').
+      3. Seja investigativo: entenda o "trabalho sujo" que o agente fará antes de definir sua identidade.
+      4. Pergunte UMA coisa por vez.
+      5. XML padrão: <agent><identity><name>...</name><role>...</role></identity><skills>...</skills></agent>`,
+      tools: {
+        updateDraftSpec: tool({
+          description: 'Atualiza o rascunho da especificação do agente no Spec Forge lateral.',
+          parameters: z.object({
+            spec: z.string().describe('O conteúdo XML completo da especificação do agente.'),
+          }),
+          execute: async ({ spec }) => {
+            return { status: "success", message: "Forge sincronizado." };
+          }
+        }),
+      },
+      maxSteps: 5,
+    });
+
+    return result.toDataStreamResponse();
+  } catch (error: any) {
+    console.error("Erro na Rota de Chat Dinâmica:", error);
+    return new Response(JSON.stringify({ 
+      error: "Erro na orquestração do Magnus", 
+      details: error.message 
+    }), { status: 500 });
+  } finally {
+    if (db) db.close();
+  }
 }

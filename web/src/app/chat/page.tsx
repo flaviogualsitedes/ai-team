@@ -1,6 +1,6 @@
 'use client';
 
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
 import { 
   Send, 
   Bot, 
@@ -13,10 +13,15 @@ import {
   Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
+function ChatContent() {
+  const searchParams = useSearchParams();
+  const intent = searchParams.get('intent');
+  const hasAutoPrompted = useRef(false);
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, append } = useChat({
     api: '/api/chat',
   });
 
@@ -27,6 +32,17 @@ export default function ChatPage() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Lógica de Auto-Prompt para Recrutamento
+  useEffect(() => {
+    if (intent === 'recruit' && !hasAutoPrompted.current && messages.length === 0 && !isLoading) {
+      hasAutoPrompted.current = true;
+      append({
+        role: 'user',
+        content: "Magnus Mastermind, solicito o recrutamento de um novo Agente de Elite. Por favor, inicie o protocolo de avaliação para identificarmos o perfil necessário para o squad."
+      });
+    }
+  }, [intent, messages.length, isLoading, append]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -132,7 +148,7 @@ export default function ChatPage() {
             />
             <button 
               type="submit"
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || !input?.trim()}
               className="absolute right-2 top-2 bottom-2 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-all disabled:opacity-20 disabled:grayscale"
             >
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
@@ -149,5 +165,17 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }
