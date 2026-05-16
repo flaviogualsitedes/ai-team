@@ -18,6 +18,7 @@ import { TruthResolver } from './truth-resolver.js';
 export interface ExecutionOptions {
   projectId: string;
   squadId: string;
+  initialTask?: string;
   dryRun?: boolean;
   onStepStart?: (agentName: string, model: string) => void;
   onStepComplete?: (data: { duration: number; tokens: number }) => void;
@@ -61,7 +62,7 @@ export class Orchestrator {
     const startTime = Date.now();
 
     try {
-      for (const agent of members) {
+      for (const [index, agent] of members.entries()) {
         const stepStartTime = Date.now();
         const modelConfig = getModelById(agent.model);
         
@@ -78,11 +79,16 @@ export class Orchestrator {
         // Usar o modelId real para o SDK
         const actualModelId = modelConfig?.modelId || context.model;
 
+        // Definir a tarefa
+        const prompt = (index === 0 && options.initialTask)
+          ? `SUA MISSÃO INICIAL:\n${options.initialTask}`
+          : `CONTEXTO DO PASSO ANTERIOR:\n${lastOutput}\n\nSUA TAREFA: Processe as informações acima e continue o trabalho.`;
+
         // Execução Real
         const { text, usage } = await generateText({
           model: google(actualModelId),
           system: context.systemPrompt,
-          prompt: `CONTEXTO DO PASSO ANTERIOR:\n${lastOutput}\n\nSUA TAREFA: Processe as informações acima e execute seu papel.`,
+          prompt,
         });
         
         const duration = (Date.now() - stepStartTime) / 1000;
