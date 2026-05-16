@@ -52,9 +52,10 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
-    // 1. Conectar ao Banco de Dados
-    const dbPath = path.resolve(process.cwd(), '../aiteam.db');
+    // 1. Conectar ao Banco de Dados (Sincronizado com lib/db.ts)
+    const dbPath = path.join(os.homedir(), '.aiteam', 'aiteam.db');
     db = new Database(dbPath);
+
 
     // 2. Buscar Configurações Globais
     const settingsRows = db.prepare('SELECT key, value FROM settings').all() as any[];
@@ -97,7 +98,8 @@ export async function POST(req: Request) {
       model = google('gemini-1.5-flash');
     }
 
-    db.close();
+    console.log(`[Magnus] Invocando streamText...`);
+
 
     // 5. Executar o Magnus Mastermind
     const result = await streamText({

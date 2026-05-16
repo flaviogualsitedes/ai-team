@@ -57,15 +57,21 @@ export function RecruitmentModal({ isOpen, onClose }: RecruitmentModalProps) {
   const startRecruitment = async () => {
     try {
       hasStarted.current = true;
-      await append({
-        role: 'user',
-        content: "Magnus, ative o protocolo de recrutamento alpha agora. Já preencha um template básico de identidade no Spec Forge e me faça a primeira pergunta para começarmos a trilha de criação do novo agente."
-      });
+      if (typeof append === 'function') {
+        await append({
+          role: 'user',
+          content: "Magnus, ative o protocolo de recrutamento alpha agora. Já preencha um template básico de identidade no Spec Forge e me faça a primeira pergunta para começarmos a trilha de criação do novo agente."
+        });
+      } else {
+        console.error("Hook append não disponível no momento.");
+        hasStarted.current = false;
+      }
     } catch (e) {
       console.error("Erro ao disparar append:", e);
       hasStarted.current = false;
     }
   };
+
 
   // Iniciação Proativa do Magnus
   useEffect(() => {
