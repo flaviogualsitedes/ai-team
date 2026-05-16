@@ -87,14 +87,23 @@ export class Orchestrator {
           : `CONTEXTO DO PASSO ANTERIOR:\n${lastOutput}\n\nSUA TAREFA: Processe as informações acima e continue o trabalho.`;
 
         // Execução Real
-        const { text, usage } = await generateText({
+        const result = await generateText({
           model: google(actualModelId),
           system: context.systemPrompt,
           prompt,
           tools: getToolsForSDK(),
           maxSteps: 5,
         });
-        
+
+        // Consolidar texto de todos os passos (importante para tool calls)
+        const text = result.steps
+          .map(step => step.text)
+          .filter(t => t && t.trim().length > 0)
+          .join('\n\n');
+
+        console.log(`Debug - Passo ${index + 1} concluído para agente ${agent.name}`);
+
+        const usage = result.usage;
         const duration = (Date.now() - stepStartTime) / 1000;
         const tokens = usage.totalTokens;
         const stepCost = (tokens / 1000) * (modelConfig?.costPer1kTokens || 0);
@@ -103,7 +112,7 @@ export class Orchestrator {
         this.db.prepare(`
           INSERT INTO execution_steps (id, execution_id, agent_id, step_number, output_full, status, tokens_used, cost_usd, model_id, duration_ms)
           VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?)
-        `).run(nanoid(), executionId, agent.id, agent.position, text, tokens, stepCost, actualModelId, duration * 1000);
+        `).run(stepId, executionId, agent.id, index + 1, text, tokens, stepCost, actualModelId, duration * 1000);
 
         lastOutput = text;
         totalTokens += tokens;
