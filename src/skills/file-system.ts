@@ -14,7 +14,7 @@ export const readFileSkill: Skill = {
   name: 'read_file',
   description: 'Lê o conteúdo completo de um arquivo de texto no projeto.',
   parameters: z.object({
-    filePath: z.string().description('Caminho relativo do arquivo (ex: src/index.ts)'),
+    filePath: z.string().describe('Caminho relativo do arquivo (ex: src/index.ts)'),
   }),
   execute: async ({ filePath }) => {
     try {
@@ -40,7 +40,7 @@ export const listDirSkill: Skill = {
   name: 'list_dir',
   description: 'Lista os arquivos e pastas de um diretório específico.',
   parameters: z.object({
-    dirPath: z.string().default('.').description('Caminho do diretório (padrão é a raiz)'),
+    dirPath: z.string().default('.').describe('Caminho do diretório (padrão é a raiz)'),
   }),
   execute: async ({ dirPath }) => {
     try {
