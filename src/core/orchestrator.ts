@@ -75,9 +75,12 @@ export class Orchestrator {
         // Configurar Provedor (Exemplo Google)
         const google = createGoogleGenerativeAI({ apiKey: context.apiKey });
 
+        // Usar o modelId real para o SDK
+        const actualModelId = modelConfig?.modelId || context.model;
+
         // Execução Real
         const { text, usage } = await generateText({
-          model: google(context.model),
+          model: google(actualModelId),
           system: context.systemPrompt,
           prompt: `CONTEXTO DO PASSO ANTERIOR:\n${lastOutput}\n\nSUA TAREFA: Processe as informações acima e execute seu papel.`,
         });
