@@ -66,6 +66,7 @@ export class TruthResolver {
       '- Responda apenas o necessário para cumprir sua tarefa.',
       '- Se houver um passo anterior no pipeline, use-o como base.',
       '- Não invente informações fora do contexto fornecido.',
+      '- Se você usar ferramentas (Skills), SEMPRE finalize sua resposta com um resumo textual claro do que foi encontrado ou realizado.',
     ].join('\n');
 
     return {
